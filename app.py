@@ -7,9 +7,20 @@ from datetime import datetime, date, timedelta
 import calendar
 from functools import wraps
 
-app = Flask(__name__)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Vercel uses /tmp for writable storage; local development uses project root
+if os.environ.get('VERCEL'):
+    DATABASE = '/tmp/clinic.db'
+else:
+    DATABASE = os.path.join(BASE_DIR, 'clinic.db')
+
+app = Flask(
+    __name__,
+    template_folder=os.path.join(BASE_DIR, 'templates'),
+    static_folder=os.path.join(BASE_DIR, 'static')
+)
 app.secret_key = os.environ.get('SECRET_KEY', 'clinic-select-secret-key-2024')
-DATABASE = 'clinic.db'
 
 # Ensure Arabic locale-like formatting
 def to_arabic_numerals(num_str):
