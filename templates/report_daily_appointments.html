@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}تقرير مواعيد اليوم - Clinic Select{% endblock %}
+
+{% block page_title %}
+    <h1>تقرير مواعيد اليوم</h1>
+    <p>مواعيد {{ report_date }} وإمكانية الطباعة والتصدير</p>
+{% endblock %}
+
+{% block content %}
+<div class="card no-print">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fas fa-filter text-primary"></i> خيارات التقرير</h2>
+    </div>
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('report_daily_appointments') }}" style="display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap;">
+            <div class="form-group" style="min-width: 200px;">
+                <label class="form-label">تاريخ التقرير</label>
+                <input type="date" name="date" class="form-control" value="{{ report_date }}">
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-search"></i> عرض
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="window.print()">
+                <i class="fas fa-print"></i> طباعة
+            </button>
+            <a href="{{ url_for('export_appointments_csv', date=report_date) }}" class="btn btn-outline">
+                <i class="fas fa-file-csv"></i> تصدير CSV
+            </a>
+        </form>
+    </div>
+</div>
+
+<div class="print-section">
+    <div class="print-header">
+        <div class="print-logo">
+            <i class="fas fa-heart-pulse"></i>
+            <div>
+                <h1>Clinic Select</h1>
+                <p>نظام إدارة العيادة</p>
+            </div>
+        </div>
+        <div class="print-info">
+            <h2>تقرير مواعيد اليوم</h2>
+            <p>التاريخ: {{ report_date }}</p>
+            <p>إجمالي المواعيد: {{ arabic_nums(appointments|length) }}</p>
+        </div>
+    </div>
+    
+    {% if appointments %}
+        <div class="table-container">
+            <table class="data-table print-table">
+                <thead>
+                    <tr>
+                        <th>م</th>
+                        <th>الوقت</th>
+                        <th>المريض</th>
+                        <th>الهاتف</th>
+                        <th>العمر</th>
+                        <th>الجنس</th>
+                        <th>الطبيب</th>
+                        <th>القسم</th>
+                        <th>النوع</th>
+                        <th>الحالة</th>
+                        <th>ملاحظات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for app in appointments %}
+                    <tr>
+                        <td>{{ arabic_nums(loop.index) }}</td>
+                        <td>{{ app.appointment_time or '--:--' }}</td>
+                        <td><strong>{{ app.patient_name }}</strong></td>
+                        <td>{{ app.patient_phone or '--' }}</td>
+                        <td>{{ arabic_nums(app.age) or '--' }}</td>
+                        <td>{{ app.gender or '--' }}</td>
+                        <td>{{ app.doctor_name }}</td>
+                        <td>{{ app.department }}</td>
+                        <td>{{ app.type }}</td>
+                        <td>{{ app.status }}</td>
+                        <td>{{ app.notes or '--' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="print-summary">
+            <h3>ملخص المواعيد حسب الطبيب</h3>
+            <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px;">
+                {% for doctor in doctors %}
+                    {% set count = appointments|selectattr('doctor_name', 'equalto', doctor.name)|list|length %}
+                    {% if count > 0 %}
+                    <div style="padding: 10px 16px; background: {{ doctor.color }}20; color: {{ doctor.color }}; border-radius: 8px; font-weight: 700;">
+                        {{ doctor.name }}: {{ arabic_nums(count) }} موعد
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-calendar-xmark"></i>
+            <h3>لا توجد مواعيد في هذا التاريخ</h3>
+        </div>
+    {% endif %}
+    
+    <div class="print-footer">
+        <p>تم إنشاء هذا التقرير من نظام Clinic Select</p>
+        <p>تاريخ الطباعة: {{ today }}</p>
+    </div>
+</div>
+{% endblock %}

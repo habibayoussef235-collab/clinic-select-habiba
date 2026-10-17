@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block title %}المواعيد - Clinic Select{% endblock %}
+
+{% block page_title %}
+    <h1>إدارة المواعيد</h1>
+    <p>حجز المواعيد وعرض الأوقات المتاحة لمتابعة المرضى</p>
+{% endblock %}
+
+{% block content %}
+<div class="filters-bar">
+    <form method="GET" action="{{ url_for('appointments') }}" style="display: contents;">
+        <div class="form-group" style="min-width: 160px;">
+            <label class="form-label">التاريخ</label>
+            <input type="date" name="date" class="form-control" value="{{ date_filter }}">
+        </div>
+        <div class="form-group" style="min-width: 180px;">
+            <label class="form-label">الطبيب</label>
+            <select name="doctor" class="form-select">
+                <option value="">كل الأطباء</option>
+                {% for doctor in doctors %}
+                    <option value="{{ doctor.id }}" {% if doctor_filter == doctor.id|string %}selected{% endif %}>{{ doctor.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group" style="min-width: 160px;">
+            <label class="form-label">الحالة</label>
+            <select name="status" class="form-select">
+                <option value="">كل الحالات</option>
+                <option value="قيد الانتظار" {% if status_filter == 'قيد الانتظار' %}selected{% endif %}>قيد الانتظار</option>
+                <option value="مؤكد" {% if status_filter == 'مؤكد' %}selected{% endif %}>مؤكد</option>
+                <option value="مكتمل" {% if status_filter == 'مكتمل' %}selected{% endif %}>مكتمل</option>
+                <option value="ملغي" {% if status_filter == 'ملغي' %}selected{% endif %}>ملغي</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-outline" style="margin-bottom: 0;">
+            <i class="fas fa-filter"></i> تصفية
+        </button>
+        <a href="{{ url_for('appointments') }}" class="btn btn-outline" style="margin-bottom: 0;">
+            <i class="fas fa-rotate-right"></i> إعادة
+        </a>
+    </form>
+    <button class="btn btn-primary" onclick="openModal('appointmentModal')" style="margin-right: auto;">
+        <i class="fas fa-calendar-plus"></i> حجز موعد
+    </button>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fas fa-list-check text-primary"></i> قائمة المواعيد</h2>
+    </div>
+    <div class="card-body">
+        {% if appointments %}
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>المريض</th>
+                            <th>الطبيب</th>
+                            <th>التاريخ</th>
+                            <th>الوقت</th>
+                            <th>النوع</th>
+                            <th>الحالة</th>
+                            <th>ملاحظات</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for app in appointments %}
+                        <tr>
+                            <td>
+                                <strong>{{ app.patient_name }}</strong><br>
+                                <small class="text-muted">{{ app.patient_phone }}</small>
+                            </td>
+                            <td>
+                                <span class="badge" style="background: {{ app.color }}20; color: {{ app.color }};">
+                                    {{ app.doctor_name }}
+                                </span>
+                            </td>
+                            <td>{{ app.appointment_date }}</td>
+                            <td>{{ app.appointment_time or '--:--' }}</td>
+                            <td>{{ app.type }}</td>
+                            <td>
+                                {% if app.status == 'مؤكد' %}
+                                    <span class="badge badge-success">{{ app.status }}</span>
+                                {% elif app.status == 'قيد الانتظار' %}
+                                    <span class="badge badge-warning">{{ app.status }}</span>
+                                {% elif app.status == 'مكتمل' %}
+                                    <span class="badge badge-info">{{ app.status }}</span>
+                                {% else %}
+                                    <span class="badge badge-danger">{{ app.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ app.notes or '--' }}</td>
+                            <td>
+                                <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                                    <a href="{{ url_for('update_appointment_status', id=app.id, status='مؤكد') }}" class="btn btn-success btn-sm" title="تأكيد">
+                                        <i class="fas fa-check"></i>
+                                    </a>
+                                    <a href="{{ url_for('update_appointment_status', id=app.id, status='مكتمل') }}" class="btn btn-info btn-sm" title="إكتمال">
+                                        <i class="fas fa-clipboard-check"></i>
+                                    </a>
+                                    <a href="{{ url_for('update_appointment_status', id=app.id, status='ملغي') }}" class="btn btn-danger btn-sm" title="إلغاء">
+                                        <i class="fas fa-xmark"></i>
+                                    </a>
+                                    <button class="btn btn-outline btn-sm" onclick="editAppointment({{ app.id }}, {{ app.patient_id }}, {{ app.doctor_id }}, '{{ app.appointment_date }}', '{{ app.appointment_time }}', '{{ app.type }}', '{{ app.status }}', `{{ app.notes or '' }}`)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <a href="{{ url_for('delete_appointment', id=app.id) }}" class="btn btn-danger btn-sm" onclick="return confirm('هل أنت متأكد من حذف هذا الموعد؟')">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-calendar-xmark"></i>
+                <h3>لا توجد مواعيد</h3>
+                <p>يمكنك حجز موعد جديد بالضغط على الزر أعلاه</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Appointment Modal -->
+<div class="modal-overlay" id="appointmentModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title" id="appointmentModalTitle">حجز موعد جديد</h3>
+            <button class="modal-close" onclick="closeModal('appointmentModal')">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('appointments') }}">
+            <div class="modal-body">
+                <input type="hidden" name="id" id="appointmentId">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">المريض</label>
+                        <select name="patient_id" id="appointmentPatient" class="form-select" required>
+                            <option value="">-- اختر المريض --</option>
+                            {% for patient in patients %}
+                                <option value="{{ patient.id }}">{{ patient.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">الطبيب</label>
+                        <select name="doctor_id" id="appointmentDoctor" class="form-select" required>
+                            <option value="">-- اختر الطبيب --</option>
+                            {% for doctor in doctors %}
+                                <option value="{{ doctor.id }}">{{ doctor.name }} - {{ doctor.department }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">التاريخ</label>
+                        <input type="date" name="appointment_date" id="appointmentDate" class="form-control" required value="{{ today }}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">الوقت</label>
+                        <select name="appointment_time" id="appointmentTime" class="form-select" required>
+                            <option value="">اختر الطبيب والتاريخ أولاً</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">نوع الموعد</label>
+                        <select name="type" id="appointmentType" class="form-select">
+                            <option value="استشارة">استشارة</option>
+                            <option value="جلسة">جلسة</option>
+                            <option value="متابعة">متابعة</option>
+                            <option value="كشف">كشف</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">الحالة</label>
+                        <select name="status" id="appointmentStatus" class="form-select">
+                            <option value="قيد الانتظار">قيد الانتظار</option>
+                            <option value="مؤكد">مؤكد</option>
+                            <option value="مكتمل">مكتمل</option>
+                            <option value="ملغي">ملغي</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label class="form-label">ملاحظات</label>
+                        <textarea name="notes" id="appointmentNotes" class="form-control"></textarea>
+                    </div>
+                </div>
+                
+                <div id="availableSlots" class="mt-2" style="display: none;">
+                    <label class="form-label">الأوقات المتاحة:</label>
+                    <div id="slotsContainer" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary">حجز الموعد</button>
+                <button type="button" class="btn btn-outline" onclick="closeModal('appointmentModal')">إلغاء</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const doctorSelect = document.getElementById('appointmentDoctor');
+const dateInput = document.getElementById('appointmentDate');
+const timeSelect = document.getElementById('appointmentTime');
+const slotsContainer = document.getElementById('slotsContainer');
+const availableSlotsDiv = document.getElementById('availableSlots');
+
+async function loadSlots() {
+    const doctorId = doctorSelect.value;
+    const appDate = dateInput.value;
+    
+    if (!doctorId || !appDate) {
+        timeSelect.innerHTML = '<option value="">اختر الطبيب والتاريخ أولاً</option>';
+        availableSlotsDiv.style.display = 'none';
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/available-slots?doctor_id=${doctorId}&date=${appDate}`);
+        const data = await response.json();
+        
+        timeSelect.innerHTML = '<option value="">-- اختر الوقت --</option>';
+        slotsContainer.innerHTML = '';
+        
+        if (data.slots.length === 0) {
+            timeSelect.innerHTML += '<option value="" disabled>لا توجد أوقات متاحة</option>';
+            slotsContainer.innerHTML = '<span class="text-muted">لا توجد أوقات متاحة لهذا اليوم</span>';
+        } else {
+            data.slots.forEach(slot => {
+                timeSelect.innerHTML += `<option value="${slot}">${slot}</option>`;
+                const slotBtn = document.createElement('button');
+                slotBtn.type = 'button';
+                slotBtn.className = 'btn btn-outline btn-sm';
+                slotBtn.textContent = slot;
+                slotBtn.onclick = () => {
+                    timeSelect.value = slot;
+                    document.querySelectorAll('#slotsContainer button').forEach(b => b.classList.remove('btn-primary'));
+                    slotBtn.classList.add('btn-primary');
+                };
+                slotsContainer.appendChild(slotBtn);
+            });
+        }
+        availableSlotsDiv.style.display = 'block';
+    } catch (error) {
+        console.error('Error loading slots:', error);
+    }
+}
+
+doctorSelect.addEventListener('change', loadSlots);
+dateInput.addEventListener('change', loadSlots);
+
+function editAppointment(id, patientId, doctorId, appDate, appTime, type, status, notes) {
+    document.getElementById('appointmentId').value = id;
+    document.getElementById('appointmentPatient').value = patientId;
+    document.getElementById('appointmentDoctor').value = doctorId;
+    document.getElementById('appointmentDate').value = appDate;
+    document.getElementById('appointmentType').value = type;
+    document.getElementById('appointmentStatus').value = status;
+    document.getElementById('appointmentNotes').value = notes;
+    document.getElementById('appointmentModalTitle').textContent = 'تعديل الموعد';
+    loadSlots().then(() => {
+        document.getElementById('appointmentTime').value = appTime;
+    });
+    openModal('appointmentModal');
+}
+</script>
+{% endblock %}

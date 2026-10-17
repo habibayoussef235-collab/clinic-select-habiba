@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}الرئيسية - Clinic Select{% endblock %}
+
+{% block page_title %}
+    <h1>لوحة التحكم</h1>
+    <p>نظرة عامة على أداء العيادة والمواعيد اليومية</p>
+{% endblock %}
+
+{% block content %}
+<div class="welcome-banner">
+    <div class="welcome-text">
+        <h2>مرحباً {{ current_user }} 👋</h2>
+        <p>هذه نظرة عامة سريعة على نشاط العيادة اليوم</p>
+    </div>
+    <div class="welcome-actions">
+        <a href="{{ url_for('appointments') }}" class="btn btn-primary">
+            <i class="fas fa-calendar-plus"></i> حجز موعد
+        </a>
+        <a href="{{ url_for('report_daily_appointments') }}" class="btn btn-secondary">
+            <i class="fas fa-print"></i> تقرير اليوم
+        </a>
+    </div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon primary">
+            <i class="fas fa-user-doctor"></i>
+        </div>
+        <div class="stat-info">
+            <h3>{{ arabic_nums(doctors_count) }}</h3>
+            <span>الأطباء</span>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon secondary">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-info">
+            <h3>{{ arabic_nums(patients_count) }}</h3>
+            <span>المرضى المسجلين</span>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon warning">
+            <i class="fas fa-calendar-day"></i>
+        </div>
+        <div class="stat-info">
+            <h3>{{ arabic_nums(today_appointments) }}</h3>
+            <span>مواعيد اليوم</span>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon success">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-info">
+            <h3>{{ arabic_nums(confirmed_today) }}</h3>
+            <span>مواعيد مؤكدة اليوم</span>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon accent">
+            <i class="fas fa-stethoscope"></i>
+        </div>
+        <div class="stat-info">
+            <h3>{{ arabic_nums(monthly_visits) }}</h3>
+            <span>زيارات آخر ٣٠ يوم</span>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title"><i class="fas fa-list-ul text-primary"></i> مواعيد اليوم والقادمة</h2>
+            <a href="{{ url_for('appointments') }}" class="btn btn-outline btn-sm">عرض الكل</a>
+        </div>
+        <div class="card-body">
+            {% if upcoming %}
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>المريض</th>
+                                <th>الطبيب</th>
+                                <th>التاريخ</th>
+                                <th>الوقت</th>
+                                <th>النوع</th>
+                                <th>الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for app in upcoming %}
+                            <tr>
+                                <td>
+                                    <strong>{{ app.patient_name }}</strong><br>
+                                    <small class="text-muted">{{ app.patient_phone }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge" style="background: {{ app.color }}20; color: {{ app.color }};">
+                                        {{ app.doctor_name }}
+                                    </span>
+                                </td>
+                                <td>{{ app.appointment_date }}</td>
+                                <td>{{ app.appointment_time or '--:--' }}</td>
+                                <td>{{ app.type }}</td>
+                                <td>
+                                    {% if app.status == 'مؤكد' %}
+                                        <span class="badge badge-success">{{ app.status }}</span>
+                                    {% elif app.status == 'قيد الانتظار' %}
+                                        <span class="badge badge-warning">{{ app.status }}</span>
+                                    {% elif app.status == 'مكتمل' %}
+                                        <span class="badge badge-info">{{ app.status }}</span>
+                                    {% else %}
+                                        <span class="badge badge-danger">{{ app.status }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-calendar-plus"></i>
+                    <h3>لا توجد مواعيد قادمة</h3>
+                    <p>يمكنك إضافة موعد جديد من صفحة المواعيد</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title"><i class="fas fa-chart-pie text-secondary"></i> توزيع مواعيد اليوم</h2>
+        </div>
+        <div class="card-body">
+            {% if doctor_stats %}
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+                    {% for doc in doctor_stats %}
+                    <div style="display: flex; align-items: center; gap: 14px; padding: 14px; background: var(--gray-50); border-radius: var(--radius);">
+                        <div style="width: 48px; height: 48px; border-radius: 50%; background: {{ doc.color }}; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700;">
+                            {{ doc.name.split('.')[-1][:1] if '.' in doc.name else doc.name[:1] }}
+                        </div>
+                        <div style="flex: 1;">
+                            <h4 style="font-size: 15px; font-weight: 800;">{{ doc.name }}</h4>
+                            <p style="font-size: 13px; color: var(--gray-600);">{{ doc.department }}</p>
+                        </div>
+                        <div style="text-align: center;">
+                            <span style="font-size: 22px; font-weight: 800; color: {{ doc.color }};">{{ arabic_nums(doc.count) }}</span>
+                            <p style="font-size: 12px; color: var(--gray-600);">موعد</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-user-doctor"></i>
+                    <h3>لا يوجد أطباء مسجلين</h3>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fas fa-bolt text-warning"></i> إجراءات سريعة</h2>
+    </div>
+    <div class="card-body">
+        <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+            <a href="{{ url_for('patients') }}" class="btn btn-primary">
+                <i class="fas fa-user-plus"></i> مريض جديد
+            </a>
+            <a href="{{ url_for('appointments') }}" class="btn btn-secondary">
+                <i class="fas fa-calendar-plus"></i> حجز موعد
+            </a>
+            <a href="{{ url_for('report_daily_appointments') }}" class="btn btn-outline">
+                <i class="fas fa-print"></i> طباعة مواعيد اليوم
+            </a>
+            <a href="{{ url_for('export_appointments_csv') }}" class="btn btn-outline">
+                <i class="fas fa-file-csv"></i> تصدير CSV
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

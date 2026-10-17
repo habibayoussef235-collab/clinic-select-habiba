@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}التقويم - Clinic Select{% endblock %}
+
+{% block page_title %}
+    <h1>تقويم المواعيد</h1>
+    <p>إدارة مواعيد المرضى والأطباء بالتقويم الشهري</p>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <div class="calendar-header" style="width: 100%; margin-bottom: 0;">
+            <h2 class="calendar-title">{{ month_name }} {{ arabic_nums(year) }}</h2>
+            <div class="calendar-nav">
+                <a href="{{ url_for('calendar_view', year=prev_year, month=prev_month) }}" class="btn btn-outline btn-icon">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+                <a href="{{ url_for('calendar_view', year=today.split('-')[0], month=today.split('-')[1]|int) }}" class="btn btn-outline">
+                    اليوم
+                </a>
+                <a href="{{ url_for('calendar_view', year=next_year, month=next_month) }}" class="btn btn-outline btn-icon">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="calendar-grid">
+            {% set days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'] %}
+            {% for day in days %}
+                <div class="calendar-day-header">{{ day }}</div>
+            {% endfor %}
+            
+            {% for week in weeks %}
+                {% for day in week %}
+                    {% if day == 0 %}
+                        <div class="calendar-day empty"></div>
+                    {% else %}
+                        {% set day_str = '%04d-%02d-%02d' % (year, month, day) %}
+                        {% set is_today = (day_str == today) %}
+                        <div class="calendar-day {% if is_today %}today{% endif %}">
+                            <div class="calendar-day-number">{{ arabic_nums(day) }}</div>
+                            <div class="calendar-appointments">
+                                {% if day_str in appointments_by_date %}
+                                    {% for app in appointments_by_date[day_str][:3] %}
+                                        <a href="{{ url_for('appointments') }}" class="calendar-appointment" style="background: {{ app.color }}20; color: {{ app.color }};" title="{{ app.patient_name }} - {{ app.appointment_time or '' }}">
+                                            {{ app.appointment_time or '' }} {{ app.patient_name }}
+                                        </a>
+                                    {% endfor %}
+                                    {% if appointments_by_date[day_str]|length > 3 %}
+                                        <span class="text-muted" style="font-size: 11px; padding: 2px 6px;">
+                                            +{{ arabic_nums(appointments_by_date[day_str]|length - 3) }} آخر
+                                        </span>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+        </div>
+        
+        <div class="mt-3" style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center;">
+            <span style="font-weight: 700; color: var(--gray-800);">الأطباء:</span>
+            {% for doctor in doctors %}
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <span style="width: 12px; height: 12px; border-radius: 50%; background: {{ doctor.color }};"></span>
+                    <span style="font-size: 13px;">{{ doctor.name }}</span>
+                </div>
+            {% endfor %}
+            <a href="{{ url_for('appointments') }}" class="btn btn-primary btn-sm" style="margin-right: auto;">
+                <i class="fas fa-list"></i> قائمة المواعيد
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

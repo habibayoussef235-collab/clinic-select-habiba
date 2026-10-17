@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+
+{% block title %}سجل المريض - {{ patient.name }} - Clinic Select{% endblock %}
+
+{% block page_title %}
+    <h1>الملف الطبي للمريض</h1>
+    <p>السجل الصحي والمواعيد والجلسات</p>
+{% endblock %}
+
+{% block content %}
+<div class="patient-header">
+    <div class="patient-avatar">
+        {{ patient.name[:1] }}
+    </div>
+    <div>
+        <h2 style="font-size: 26px; font-weight: 800;">{{ patient.name }}</h2>
+        <div class="patient-meta">
+            <span><i class="fas fa-phone text-primary"></i> {{ patient.phone or 'لا يوجد' }}</span>
+            <span><i class="fas fa-cake-candles text-secondary"></i> {{ arabic_nums(patient.age) or '--' }} سنة</span>
+            <span><i class="fas fa-venus-mars text-warning"></i> {{ patient.gender or '--' }}</span>
+            <span><i class="fas fa-droplet text-danger"></i> {{ patient.blood_type or '--' }}</span>
+            <span><i class="fas fa-allergies text-info"></i> {{ patient.allergies or 'لا يوجد' }}</span>
+            <span><i class="fas fa-location-dot text-muted"></i> {{ patient.address or 'لا يوجد' }}</span>
+        </div>
+    </div>
+    <div style="margin-right: auto; display: flex; gap: 10px; flex-wrap: wrap;">
+        <button class="btn btn-primary" onclick="openModal('visitModal')">
+            <i class="fas fa-plus"></i> إضافة جلسة
+        </button>
+        <button class="btn btn-outline" onclick="openModal('historyModal')">
+            <i class="fas fa-file-medical"></i> عرض الملف الطبي
+        </button>
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title"><i class="fas fa-stethoscope text-primary"></i> الجلسات والمتابعة</h2>
+            </div>
+            <div class="card-body">
+                {% if visits %}
+                    <div class="timeline">
+                        {% for visit in visits %}
+                        <div class="timeline-item">
+                            <div class="timeline-date">
+                                <i class="fas fa-calendar"></i> {{ visit.visit_date }}
+                                {% if visit.follow_up_date %}
+                                    <span style="margin-right: 12px; color: var(--warning);">
+                                        <i class="fas fa-arrow-rotate-left"></i> متابعة: {{ visit.follow_up_date }}
+                                    </span>
+                                {% endif %}
+                            </div>
+                            <div class="timeline-content">
+                                <div class="flex justify-between items-center mb-1">
+                                    <h4>{{ visit.type }} - {{ visit.doctor_name }}</h4>
+                                    <div style="display: flex; gap: 6px;">
+                                        <span class="badge badge-primary">{{ visit.department }}</span>
+                                        <a href="{{ url_for('report_patient_prescription', patient_id=patient.id, visit_id=visit.id) }}" class="btn btn-outline btn-sm" target="_blank">
+                                            <i class="fas fa-print"></i> طباعة الروشتة
+                                        </a>
+                                    </div>
+                                </div>
+                                {% if visit.diagnosis %}
+                                    <p><strong>التشخيص:</strong> {{ visit.diagnosis }}</p>
+                                {% endif %}
+                                {% if visit.prescription %}
+                                    <p><strong>العلاج:</strong> {{ visit.prescription }}</p>
+                                {% endif %}
+                                {% if visit.notes %}
+                                    <p><strong>ملاحظات:</strong> {{ visit.notes }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-notes-medical"></i>
+                        <h3>لا توجد جلسات مسجلة</h3>
+                        <p>يمكنك إضافة جلسة أو متابعة جديدة</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div>
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title"><i class="fas fa-file-medical text-secondary"></i> المعلومات الصحية</h2>
+            </div>
+            <div class="card-body">
+                {% if patient.medical_history %}
+                    <p style="white-space: pre-line; color: var(--gray-800); line-height: 1.8;">{{ patient.medical_history }}</p>
+                {% else %}
+                    <div class="empty-state" style="padding: 30px 20px;">
+                        <i class="fas fa-notes-medical"></i>
+                        <h3>لا يوجد تاريخ مرضي مسجل</h3>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title"><i class="fas fa-calendar-check text-warning"></i> المواعيد</h2>
+            </div>
+            <div class="card-body">
+                {% if appointments %}
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        {% for app in appointments %}
+                        <div style="padding: 14px; background: var(--gray-50); border-radius: var(--radius); border-right: 4px solid {{ app.color }};">
+                            <div class="flex justify-between items-center mb-1">
+                                <strong style="color: var(--dark);">{{ app.doctor_name }}</strong>
+                                <span class="badge 
+                                    {% if app.status == 'مؤكد' %}badge-success
+                                    {% elif app.status == 'قيد الانتظار' %}badge-warning
+                                    {% elif app.status == 'مكتمل' %}badge-info
+                                    {% else %}badge-danger{% endif %}">
+                                    {{ app.status }}
+                                </span>
+                            </div>
+                            <p style="font-size: 13px; color: var(--gray-600); margin: 0;">
+                                <i class="fas fa-calendar"></i> {{ app.appointment_date }}
+                                {% if app.appointment_time %}
+                                    <span style="margin-right: 8px;"><i class="fas fa-clock"></i> {{ app.appointment_time }}</span>
+                                {% endif %}
+                            </p>
+                            <p style="font-size: 12px; color: var(--gray-500); margin-top: 4px;">{{ app.type }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state" style="padding: 30px 20px;">
+                        <i class="fas fa-calendar-plus"></i>
+                        <h3>لا توجد مواعيد</h3>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Visit Modal -->
+<div class="modal-overlay" id="visitModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">إضافة جلسة / متابعة</h3>
+            <button class="modal-close" onclick="closeModal('visitModal')">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('patient_detail', id=patient.id) }}">
+            <div class="modal-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">الطبيب</label>
+                        <select name="doctor_id" class="form-select" required>
+                            {% for doctor in doctors %}
+                                <option value="{{ doctor.id }}">{{ doctor.name }} - {{ doctor.department }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">نوع الزيارة</label>
+                        <select name="type" class="form-select" required>
+                            <option value="استشارة">استشارة</option>
+                            <option value="جلسة">جلسة</option>
+                            <option value="متابعة">متابعة</option>
+                            <option value="كشف">كشف</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">تاريخ الزيارة</label>
+                        <input type="date" name="visit_date" class="form-control" required value="{{ today }}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">تاريخ المتابعة</label>
+                        <input type="date" name="follow_up_date" class="form-control">
+                    </div>
+                    <div class="form-group full-width">
+                        <label class="form-label">التشخيص</label>
+                        <textarea name="diagnosis" class="form-control" placeholder="اكتب التشخيص هنا..."></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label class="form-label">العلاج / الروشتة</label>
+                        <textarea name="prescription" class="form-control" placeholder="الأدوية والجرعات..."></textarea>
+                    </div>
+                    <div class="form-group full-width">
+                        <label class="form-label">ملاحظات</label>
+                        <textarea name="notes" class="form-control" placeholder="أي ملاحظات إضافية..."></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary">حفظ الجلسة</button>
+                <button type="button" class="btn btn-outline" onclick="closeModal('visitModal')">إلغاء</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Medical History Modal -->
+<div class="modal-overlay" id="historyModal">
+    <div class="modal" style="max-width: 800px;">
+        <div class="modal-header">
+            <h3 class="modal-title"><i class="fas fa-file-medical"></i> الملف الطبي الكامل</h3>
+            <button class="modal-close" onclick="closeModal('historyModal')">&times;</button>
+        </div>
+        <div class="modal-body" id="historyContent">
+            <div style="text-align: center; padding: 20px; border: 2px solid var(--primary); border-radius: var(--radius-lg); margin-bottom: 24px;">
+                <h2 style="color: var(--primary-dark); margin-bottom: 8px;">{{ patient.name }}</h2>
+                <p style="color: var(--gray-600); font-weight: 600;">
+                    {{ patient.gender or '--' }} | {{ arabic_nums(patient.age) or '--' }} سنة | فصيلة الدم: {{ patient.blood_type or '--' }}
+                </p>
+                <p style="color: var(--gray-600); font-size: 14px;">
+                    <i class="fas fa-phone"></i> {{ patient.phone or '--' }} | 
+                    <i class="fas fa-location-dot"></i> {{ patient.address or '--' }}
+                </p>
+            </div>
+            
+            <div class="mb-3">
+                <h4 style="color: var(--primary-dark); margin-bottom: 12px;"><i class="fas fa-allergies"></i> الحساسية</h4>
+                <p style="background: var(--gray-50); padding: 14px; border-radius: var(--radius);">{{ patient.allergies or 'لا يوجد' }}</p>
+            </div>
+            
+            <div class="mb-3">
+                <h4 style="color: var(--primary-dark); margin-bottom: 12px;"><i class="fas fa-notes-medical"></i> التاريخ المرضي</h4>
+                <p style="background: var(--gray-50); padding: 14px; border-radius: var(--radius); white-space: pre-line; line-height: 1.8;">{{ patient.medical_history or 'لا يوجد تاريخ مرضي مسجل' }}</p>
+            </div>
+            
+            <div>
+                <h4 style="color: var(--primary-dark); margin-bottom: 12px;"><i class="fas fa-stethoscope"></i> الزيارات والجلسات</h4>
+                {% if visits %}
+                    <div style="display: flex; flex-direction: column; gap: 14px;">
+                        {% for visit in visits %}
+                        <div style="border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 16px;">
+                            <div class="flex justify-between items-center mb-2">
+                                <strong>{{ visit.visit_date }} - {{ visit.type }}</strong>
+                                <span class="badge badge-primary">{{ visit.doctor_name }}</span>
+                            </div>
+                            {% if visit.diagnosis %}<p><strong>التشخيص:</strong> {{ visit.diagnosis }}</p>{% endif %}
+                            {% if visit.prescription %}<p><strong>العلاج:</strong> {{ visit.prescription }}</p>{% endif %}
+                            {% if visit.notes %}<p><strong>ملاحظات:</strong> {{ visit.notes }}</p>{% endif %}
+                            {% if visit.follow_up_date %}<p><strong>متابعة:</strong> {{ visit.follow_up_date }}</p>{% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">لا توجد زيارات مسجلة</p>
+                {% endif %}
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" onclick="printHistory()">
+                <i class="fas fa-print"></i> طباعة الملف الطبي
+            </button>
+            <button type="button" class="btn btn-outline" onclick="closeModal('historyModal')">إغلاق</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function printHistory() {
+    const content = document.getElementById('historyContent').innerHTML;
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html dir="rtl" lang="ar">
+        <head>
+            <title>الملف الطبي - {{ patient.name }}</title>
+            <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+            <style>
+                body { font-family: 'Cairo', sans-serif; padding: 30px; color: #1e293b; line-height: 1.6; }
+                h2, h3, h4 { color: #0f766e; }
+                .badge { background: #0d9488; color: white; padding: 4px 10px; border-radius: 20px; font-size: 12px; }
+                p { margin: 8px 0; }
+                .text-muted { color: #64748b; }
+            </style>
+        </head>
+        <body>${content}</body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+    }, 500);
+}
+</script>
+{% endblock %}

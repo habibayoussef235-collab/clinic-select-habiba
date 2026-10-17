@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}الأطباء - Clinic Select{% endblock %}
+
+{% block page_title %}
+    <h1>إدارة الأطباء</h1>
+    <p>إضافة وتعديل بيانات الأطباء وأقسامهم</p>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title"><i class="fas fa-user-doctor text-primary"></i> قائمة الأطباء</h2>
+        <button class="btn btn-primary" id="addDoctorBtn">
+            <i class="fas fa-plus"></i> طبيب جديد
+        </button>
+    </div>
+    <div class="card-body">
+        {% if doctors %}
+            <div class="doctors-grid">
+                {% for doctor in doctors %}
+                <div class="doctor-card" style="border-top-color: {{ doctor.color }}" data-doctor-id="{{ doctor.id }}">
+                    <div class="doctor-card-header">
+                        <div class="doctor-avatar" style="background: {{ doctor.color }};">
+                            {{ doctor.name.split('.')[-1][:1] if '.' in doctor.name else doctor.name[:1] }}
+                        </div>
+                        <div class="doctor-info">
+                            <h3>{{ doctor.name }}</h3>
+                            <span class="badge" style="background: {{ doctor.color }}20; color: {{ doctor.color }};">
+                                {{ doctor.department }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="doctor-contact">
+                        <span><i class="fas fa-phone text-primary"></i> {{ doctor.phone or 'غير متوفر' }}</span>
+                        <span><i class="fas fa-envelope text-secondary"></i> {{ doctor.email or 'غير متوفر' }}</span>
+                        {% if doctor.schedule %}
+                        <span><i class="fas fa-clock text-warning"></i> {{ doctor.schedule }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="doctor-actions">
+                        <button class="btn btn-outline btn-sm edit-doctor-btn"
+                                data-id="{{ doctor.id }}"
+                                data-name="{{ doctor.name }}"
+                                data-department="{{ doctor.department }}"
+                                data-phone="{{ doctor.phone or '' }}"
+                                data-email="{{ doctor.email or '' }}"
+                                data-color="{{ doctor.color }}"
+                                data-schedule="{{ doctor.schedule or '' }}">
+                            <i class="fas fa-edit"></i> تعديل
+                        </button>
+                        <button class="btn btn-danger btn-sm delete-doctor-btn" data-id="{{ doctor.id }}" data-name="{{ doctor.name }}">
+                            <i class="fas fa-trash"></i> حذف
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-user-doctor"></i>
+                <h3>لا يوجد أطباء مسجلين</h3>
+                <p>يمكنك إضافة أطباء جدد بالضغط على الزر أعلاه</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Doctor Modal -->
+<div class="modal-overlay" id="doctorModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title" id="doctorModalTitle">طبيب جديد</h3>
+            <button class="modal-close" onclick="closeModal('doctorModal')">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('doctors') }}" id="doctorForm">
+            <div class="modal-body">
+                <input type="hidden" name="id" id="doctorId">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">اسم الطبيب</label>
+                        <input type="text" name="name" id="doctorName" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">القسم</label>
+                        <input type="text" name="department" id="doctorDepartment" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">رقم الهاتف</label>
+                        <input type="tel" name="phone" id="doctorPhone" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">البريد الإلكتروني</label>
+                        <input type="email" name="email" id="doctorEmail" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">لون التمييز</label>
+                        <input type="color" name="color" id="doctorColor" class="form-control" value="#0d9488">
+                    </div>
+                    <div class="form-group full-width">
+                        <label class="form-label">مواعيد العمل</label>
+                        <input type="text" name="schedule" id="doctorSchedule" class="form-control" placeholder="مثال: السبت - الأربعاء: ٩ ص - ٩ م">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary" id="doctorSubmitBtn">حفظ</button>
+                <button type="button" class="btn btn-outline" onclick="closeModal('doctorModal')">إلغاء</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Hidden delete form -->
+<form id="deleteDoctorForm" method="GET" action="" style="display: none;"></form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function resetDoctorForm() {
+    document.getElementById('doctorForm').reset();
+    document.getElementById('doctorId').value = '';
+    document.getElementById('doctorColor').value = '#0d9488';
+    document.getElementById('doctorModalTitle').textContent = 'طبيب جديد';
+    document.getElementById('doctorSubmitBtn').textContent = 'حفظ';
+}
+
+function openDoctorModalForEdit(data) {
+    document.getElementById('doctorId').value = data.id;
+    document.getElementById('doctorName').value = data.name;
+    document.getElementById('doctorDepartment').value = data.department;
+    document.getElementById('doctorPhone').value = data.phone;
+    document.getElementById('doctorEmail').value = data.email;
+    document.getElementById('doctorColor').value = data.color;
+    document.getElementById('doctorSchedule').value = data.schedule;
+    document.getElementById('doctorModalTitle').textContent = 'تعديل بيانات الطبيب';
+    document.getElementById('doctorSubmitBtn').textContent = 'تحديث';
+    openModal('doctorModal');
+}
+
+// Add new doctor button
+document.getElementById('addDoctorBtn').addEventListener('click', function() {
+    resetDoctorForm();
+    openModal('doctorModal');
+});
+
+// Edit doctor buttons
+document.querySelectorAll('.edit-doctor-btn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        openDoctorModalForEdit({
+            id: this.getAttribute('data-id'),
+            name: this.getAttribute('data-name'),
+            department: this.getAttribute('data-department'),
+            phone: this.getAttribute('data-phone'),
+            email: this.getAttribute('data-email'),
+            color: this.getAttribute('data-color'),
+            schedule: this.getAttribute('data-schedule')
+        });
+    });
+});
+
+// Delete doctor buttons
+document.querySelectorAll('.delete-doctor-btn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var id = this.getAttribute('data-id');
+        var name = this.getAttribute('data-name');
+        if (confirm('هل أنت متأكد من حذف الطبيب "' + name + '"؟')) {
+            var form = document.getElementById('deleteDoctorForm');
+            form.action = '/doctors/delete/' + id;
+            form.submit();
+        }
+    });
+});
+</script>
+{% endblock %}

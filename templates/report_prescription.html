@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>روشتة علاج - {{ patient.name }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #0d9488;
+            --primary-dark: #0f766e;
+            --gray-600: #475569;
+            --gray-200: #e2e8f0;
+            --gray-100: #f1f5f9;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: var(--gray-100);
+            padding: 30px;
+            direction: rtl;
+            color: #1e293b;
+        }
+        
+        .prescription-page {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .prescription-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .prescription-header .logo {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        
+        .prescription-header .logo i {
+            font-size: 42px;
+        }
+        
+        .prescription-header h1 {
+            font-size: 28px;
+            font-weight: 800;
+        }
+        
+        .prescription-header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .prescription-header .doc-info {
+            text-align: left;
+        }
+        
+        .prescription-body {
+            padding: 30px;
+        }
+        
+        .patient-info-box {
+            background: var(--gray-100);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        
+        .patient-info-box h3 {
+            color: var(--primary-dark);
+            margin-bottom: 14px;
+            font-size: 18px;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+        }
+        
+        .info-item label {
+            font-size: 12px;
+            color: var(--gray-600);
+            font-weight: 700;
+        }
+        
+        .info-item p {
+            font-size: 15px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        
+        .section {
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        .section:last-of-type {
+            border-bottom: none;
+        }
+        
+        .section h3 {
+            color: var(--primary-dark);
+            margin-bottom: 12px;
+            font-size: 18px;
+        }
+        
+        .section p {
+            line-height: 1.8;
+            font-size: 15px;
+        }
+        
+        .prescription-box {
+            background: #f0fdfa;
+            border: 2px dashed var(--primary);
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 12px;
+        }
+        
+        .prescription-box h3 {
+            color: var(--primary-dark);
+            margin-bottom: 14px;
+        }
+        
+        .prescription-box p {
+            white-space: pre-line;
+            font-size: 16px;
+            line-height: 2;
+        }
+        
+        .prescription-footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        
+        .signature {
+            text-align: center;
+        }
+        
+        .signature-line {
+            border-top: 1px solid #1e293b;
+            width: 200px;
+            margin-bottom: 8px;
+            padding-top: 8px;
+        }
+        
+        .print-actions {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn:hover {
+            background: var(--primary-dark);
+        }
+        
+        @media print {
+            body { background: white; padding: 0; }
+            .prescription-page { box-shadow: none; max-width: 100%; }
+            .print-actions { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="print-actions">
+        <button class="btn" onclick="window.print()">
+            <i class="fas fa-print"></i> طباعة الروشتة
+        </button>
+        <a href="{{ url_for('patient_detail', id=patient.id) }}" class="btn" style="background: #475569;">
+            <i class="fas fa-arrow-right"></i> العودة للسجل
+        </a>
+    </div>
+    
+    <div class="prescription-page">
+        <div class="prescription-header">
+            <div class="logo">
+                <i class="fas fa-heart-pulse"></i>
+                <div>
+                    <h1>Clinic Select</h1>
+                    <p>نظام إدارة العيادة</p>
+                </div>
+            </div>
+            <div class="doc-info">
+                <p><strong>{{ visit.doctor_name }}</strong></p>
+                <p>{{ visit.department }}</p>
+                <p>{{ visit.visit_date }}</p>
+            </div>
+        </div>
+        
+        <div class="prescription-body">
+            <div class="patient-info-box">
+                <h3><i class="fas fa-user-injured"></i> بيانات المريض</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>الاسم</label>
+                        <p>{{ patient.name }}</p>
+                    </div>
+                    <div class="info-item">
+                        <label>العمر</label>
+                        <p>{{ arabic_nums(patient.age) or '--' }} سنة</p>
+                    </div>
+                    <div class="info-item">
+                        <label>الجنس</label>
+                        <p>{{ patient.gender or '--' }}</p>
+                    </div>
+                    <div class="info-item">
+                        <label>فصيلة الدم</label>
+                        <p>{{ patient.blood_type or '--' }}</p>
+                    </div>
+                    <div class="info-item">
+                        <label>الحساسية</label>
+                        <p>{{ patient.allergies or 'لا يوجد' }}</p>
+                    </div>
+                    <div class="info-item">
+                        <label>رقم الهاتف</label>
+                        <p>{{ patient.phone or '--' }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h3><i class="fas fa-stethoscope"></i> التشخيص</h3>
+                <p>{{ visit.diagnosis or 'لم يتم تسجيل تشخيص' }}</p>
+            </div>
+            
+            <div class="prescription-box">
+                <h3><i class="fas fa-prescription-bottle-medical"></i> الروشتة / العلاج</h3>
+                <p>{{ visit.prescription or 'لم يتم تسجيل علاج' }}</p>
+            </div>
+            
+            {% if visit.notes %}
+            <div class="section" style="margin-top: 24px;">
+                <h3><i class="fas fa-notes-medical"></i> ملاحظات الطبيب</h3>
+                <p>{{ visit.notes }}</p>
+            </div>
+            {% endif %}
+            
+            {% if visit.follow_up_date %}
+            <div class="section">
+                <h3><i class="fas fa-calendar-check"></i> موعد المتابعة</h3>
+                <p>{{ visit.follow_up_date }}</p>
+            </div>
+            {% endif %}
+            
+            <div class="prescription-footer">
+                <div>
+                    <p style="font-size: 13px; color: var(--gray-600);">تاريخ الزيارة: {{ visit.visit_date }}</p>
+                    <p style="font-size: 13px; color: var(--gray-600);">نوع الزيارة: {{ visit.type }}</p>
+                </div>
+                <div class="signature">
+                    <div class="signature-line"></div>
+                    <p>توقيع الطبيب</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

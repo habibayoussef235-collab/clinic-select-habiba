@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}المرضى - Clinic Select{% endblock %}
+
+{% block page_title %}
+    <h1>إدارة المرضى</h1>
+    <p>قاعدة بيانات المرضى وسجلاتهم الطبية</p>
+{% endblock %}
+
+{% block content %}
+<div class="filters-bar">
+    <form method="GET" action="{{ url_for('patients') }}" class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" name="search" placeholder="البحث بالاسم أو رقم الهاتف..." value="{{ search }}">
+    </form>
+    <button class="btn btn-primary" onclick="openModal('patientModal')">
+        <i class="fas fa-user-plus"></i> مريض جديد
+    </button>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if patients %}
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>الاسم</th>
+                            <th>الهاتف</th>
+                            <th>العمر</th>
+                            <th>الجنس</th>
+                            <th>فصيلة الدم</th>
+                            <th>حساسية</th>
+                            <th>العنوان</th>
+                            <th>تاريخ التسجيل</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for patient in patients %}
+                        <tr>
+                            <td>
+                                <strong>{{ patient.name }}</strong>
+                            </td>
+                            <td>{{ patient.phone or '--' }}</td>
+                            <td>{{ arabic_nums(patient.age) or '--' }}</td>
+                            <td>
+                                {% if patient.gender == 'ذكر' %}
+                                    <span class="badge badge-secondary">{{ patient.gender }}</span>
+                                {% elif patient.gender == 'أنثى' %}
+                                    <span class="badge badge-warning">{{ patient.gender }}</span>
+                                {% else %}
+                                    <span class="badge badge-info">{{ patient.gender or '--' }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if patient.blood_type %}
+                                    <span class="badge badge-danger">{{ patient.blood_type }}</span>
+                                {% else %}
+                                    <span class="text-muted">--</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ patient.allergies or '--' }}</td>
+                            <td>{{ patient.address or '--' }}</td>
+                            <td>{{ patient.created_at[:10] }}</td>
+                            <td>
+                                <div style="display: flex; gap: 6px;">
+                                    <a href="{{ url_for('patient_detail', id=patient.id) }}" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-file-medical"></i> السجل
+                                    </a>
+                                    <button class="btn btn-outline btn-sm" onclick="editPatient({{ patient.id }}, '{{ patient.name }}', '{{ patient.phone }}', '{{ patient.age }}', '{{ patient.gender }}', '{{ patient.address }}', `{{ patient.medical_history or '' }}`, '{{ patient.blood_type }}', `{{ patient.allergies or '' }}`)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <a href="{{ url_for('delete_patient', id=patient.id) }}" class="btn btn-danger btn-sm" onclick="return confirm('هل أنت متأكد من حذف هذا المريض؟ سيتم حذف جميع مواعيده وجلساته')">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-users"></i>
+                <h3>لا يوجد مرضى مسجلين</h3>
+                <p>يمكنك إضافة مريض جديد بالضغط على الزر أعلاه</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Patient Modal -->
+<div class="modal-overlay" id="patientModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title" id="patientModalTitle">مريض جديد</h3>
+            <button class="modal-close" onclick="closeModal('patientModal')">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('patients') }}">
+            <div class="modal-body">
+                <input type="hidden" name="id" id="patientId">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">اسم المريض</label>
+                        <input type="text" name="name" id="patientName" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">رقم الهاتف</label>
+                        <input type="tel" name="phone" id="patientPhone" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">العمر</label>
+                        <input type="number" name="age" id="patientAge" class="form-control" min="0" max="120">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">الجنس</label>
+                        <select name="gender" id="patientGender" class="form-select">
+                            <option value="">-- اختر --</option>
+                            <option value="ذكر">ذكر</option>
+                            <option value="أنثى">أنثى</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">العنوان</label>
+                        <input type="text" name="address" id="patientAddress" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">فصيلة الدم</label>
+                        <select name="blood_type" id="patientBloodType" class="form-select">
+                            <option value="">-- غير معروف --</option>
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">الحساسية</label>
+                        <input type="text" name="allergies" id="patientAllergies" class="form-control" placeholder="مثال: البنسلين، الغبار...">
+                    </div>
+                    <div class="form-group full-width">
+                        <label class="form-label">التاريخ المرضي</label>
+                        <textarea name="medical_history" id="patientHistory" class="form-control" placeholder="أمراض مزمنة، حساسية، عمليات سابقة..."></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary">حفظ</button>
+                <button type="button" class="btn btn-outline" onclick="closeModal('patientModal')">إلغاء</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function editPatient(id, name, phone, age, gender, address, history, bloodType, allergies) {
+    document.getElementById('patientId').value = id;
+    document.getElementById('patientName').value = name;
+    document.getElementById('patientPhone').value = phone;
+    document.getElementById('patientAge').value = age;
+    document.getElementById('patientGender').value = gender;
+    document.getElementById('patientAddress').value = address;
+    document.getElementById('patientHistory').value = history;
+    document.getElementById('patientBloodType').value = bloodType;
+    document.getElementById('patientAllergies').value = allergies;
+    document.getElementById('patientModalTitle').textContent = 'تعديل بيانات المريض';
+    openModal('patientModal');
+}
+</script>
+{% endblock %}
