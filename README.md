@@ -57,6 +57,15 @@ venv\Scripts\python app.py
 
 انظر ملف `DEPLOY.md` للحصول على خطوات النشر المجاني على Render.
 
+أو انقر مباشرة:
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/habibayoussef235-collab/clinic-select-habiba)
+
+**الرابط المتوقع بعد النشر:**
+```
+https://clinic-select-habiba.onrender.com
+```
+
 ## 📂 هيكل المشروع
 
 ```

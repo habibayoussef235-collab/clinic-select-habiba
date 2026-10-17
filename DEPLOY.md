@@ -1,47 +1,49 @@
 # Deploy Clinic Select to Render (Free)
 
-## الطريقة السريعة (GitHub + Render)
-
-### 1. رفع المشروع على GitHub
-
-```bash
-# داخل مجلد clinic-select
-git init
-git add .
-git commit -m "Initial commit: Clinic Select with auth, demo data, reports"
-git branch -M main
-
-# أنشئ مستودعاً على GitHub ثم اربطه:
-git remote add origin https://github.com/YOUR_USERNAME/clinic-select.git
-git push -u origin main
+المشروع موجود على GitHub:
+```
+https://github.com/habibayoussef235-collab/clinic-select-habiba
 ```
 
-### 2. النشر على Render
+## الطريقة السريعة (Render)
 
-1. سجل دخولك على [render.com](https://render.com) بحساب GitHub
-2. اضغط **New +** ثم اختر **Web Service**
-3. اربط مستودع `clinic-select` من GitHub
+انقر على الزر التالي:
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/habibayoussef235-collab/clinic-select-habiba)
+
+ثم:
+1. سجل دخولك على Render بحساب GitHub
+2. اختر الاسم: `clinic-select-habiba`
+3. اضغط **Create Web Service**
+4. انتظر حتى اكتمال البناء (٢-٣ دقائق)
+
+**الرابط النهائي سيكون:**
+```
+https://clinic-select-habiba.onrender.com
+```
+
+## الطريقة اليدوية
+
+1. سجل دخولك على [render.com](https://render.com)
+2. اضغط **New +** ثم **Web Service**
+3. اربط مستودع `clinic-select-habiba` من GitHub
 4. املأ البيانات:
-   - **Name:** clinic-select
+   - **Name:** `clinic-select-habiba`
    - **Runtime:** Python 3
    - **Build Command:** `pip install -r requirements.txt`
    - **Start Command:** `gunicorn wsgi:app`
 5. اضغط **Create Web Service**
-6. بعد اكتمال البناء، ستحصل على رابط مثل:
-   ```
-   https://clinic-select.onrender.com
-   ```
 
 ## ملفات النشر الموجودة
 
 - `requirements.txt` - متطلبات Python
 - `Procfile` - أمر التشغيل
 - `wsgi.py` - نقطة الدخول للإنتاج
-- `render.yaml` - إعدادات Render (اختياري)
+- `render.yaml` - إعدادات Render
 - `runtime.txt` - إصدار Python
 
 ## ملاحظات
 
 - قاعدة البيانات SQLite ستُنشأ تلقائياً على Render
 - البيانات التجريبية (الأطباء + المرضى + المواعيد) ستُضاف عند أول تشغيل
-- لاستخدام قاعدة بيانات دائمة، يمكنك ترقية Render لإضافة PostgreSQL
+- قد يستغرق التطبيق وقتًا أطول في التحميل عند أول زيارة (الخطة المجانية)
