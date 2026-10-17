@@ -55,16 +55,25 @@ venv\Scripts\python app.py
 
 ## 🌐 النشر
 
-انظر ملف `DEPLOY.md` للحصول على خطوات النشر المجاني على Render.
+### النشر على Vercel (مجاني - لا يحتاج بطاقة ائتمان)
 
-أو انقر مباشرة:
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/habibayoussef235-collab/clinic-select-habiba&project-name=clinic-select-habiba&repo-name=clinic-select-habiba)
+
+**الرابط المتوقع:**
+```
+https://clinic-select-habiba.vercel.app
+```
+
+### النشر على Render
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/habibayoussef235-collab/clinic-select-habiba)
 
-**الرابط المتوقع بعد النشر:**
+**الرابط المتوقع:**
 ```
 https://clinic-select-habiba.onrender.com
 ```
+
+انظر ملف `DEPLOY.md` للحصول على خطوات مفصلة.
 
 ## 📂 هيكل المشروع
 
